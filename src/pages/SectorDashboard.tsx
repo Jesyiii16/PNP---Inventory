@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { itemsKey, loadStations, saveStations, toNum } from "../utils/storage";
 import { MiniStat } from "../components/UI";
@@ -47,7 +47,7 @@ export default function SectorDashboard() {
     const [showNew, setShowNew] = useState(false);
     const [newName, setNewName] = useState("");
 
-    function createStation(e: React.FormEvent) {
+    function createStation(e: FormEvent) {
         e.preventDefault();
         const name = newName.trim();
         if (!name) return;
@@ -95,10 +95,7 @@ export default function SectorDashboard() {
                 <section>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {stationCards.map((card) => (
-                            <div
-                                key={card.name}
-                                className="panel panel-pad flex flex-col gap-4"
-                            >
+                            <div key={card.name} className="panel panel-pad flex flex-col gap-4">
                                 <div>
                                     <div className="text-[11px] uppercase tracking-wider text-slate-500">
                                         Station
@@ -115,9 +112,7 @@ export default function SectorDashboard() {
                                     <button
                                         onClick={() =>
                                             nav(
-                                                `/sector/${encodeURIComponent(sector)}/${encodeURIComponent(
-                                                    card.name
-                                                )}`
+                                                `/sector/${encodeURIComponent(sector)}/${encodeURIComponent(card.name)}`
                                             )
                                         }
                                         className="soft-btn px-3 py-2"

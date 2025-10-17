@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+
 import { useNavigate } from "react-router-dom";
 import { SECTORS, itemsKey, toNum } from "../utils/storage";
 import { MiniStat } from "../components/UI";

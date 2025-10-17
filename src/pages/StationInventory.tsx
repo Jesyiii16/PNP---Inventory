@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { itemsKey, toNum } from "../utils/storage";
 import { Card, Th, Input } from "../components/UI";
@@ -28,10 +28,7 @@ export default function StationInventory() {
     });
     const [editing, setEditing] = useState<any | null>(null);
 
-    useEffect(
-        () => localStorage.setItem(STORAGE_KEY, JSON.stringify(items)),
-        [STORAGE_KEY, items]
-    );
+    useEffect(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(items)), [STORAGE_KEY, items]);
 
     const stationItems = useMemo(
         () => items.filter((i) => (i.station || "").trim() === station.trim()),
@@ -58,8 +55,7 @@ export default function StationInventory() {
         rows = [...rows].sort((a, b) => {
             const av = getField(a, sort.by);
             const bv = getField(b, sort.by);
-            if (typeof av === "number" && typeof bv === "number")
-                return (av - bv) * mul;
+            if (typeof av === "number" && typeof bv === "number") return (av - bv) * mul;
             return String(av).localeCompare(String(bv)) * mul;
         });
         return rows;
@@ -71,7 +67,7 @@ export default function StationInventory() {
         return item?.[by] ?? "";
     }
 
-    function handleAdd(e: React.FormEvent<HTMLFormElement>) {
+    function handleAdd(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         const form = new FormData(e.currentTarget);
         const data: any = Object.fromEntries(form.entries());
@@ -99,7 +95,7 @@ export default function StationInventory() {
         (e.currentTarget as HTMLFormElement).reset();
     }
 
-    function handleEditSave(e: React.FormEvent<HTMLFormElement>) {
+    function handleEditSave(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         const form = new FormData(e.currentTarget);
         const data: any = Object.fromEntries(form.entries());
@@ -135,9 +131,7 @@ export default function StationInventory() {
     }
 
     function toggleSort(by: string) {
-        setSort((s) =>
-            s.by === by ? { by, dir: s.dir === "asc" ? "desc" : "asc" } : { by, dir: "asc" }
-        );
+        setSort((s) => (s.by === by ? { by, dir: s.dir === "asc" ? "desc" : "asc" } : { by, dir: "asc" }));
     }
 
     function exportCSV() {
@@ -156,17 +150,13 @@ export default function StationInventory() {
         ];
         const rows = [
             headers.join(","),
-            ...filtered.map((i) =>
-                headers.map((h) => JSON.stringify(getCSVValue(i, h))).join(",")
-            ),
+            ...filtered.map((i) => headers.map((h) => JSON.stringify(getCSVValue(i, h))).join(",")),
         ].join("\n");
         const blob = new Blob([rows], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${sector}-${station}-inventory-${new Date()
-            .toISOString()
-            .slice(0, 10)}.csv`;
+        a.download = `${sector}-${station}-inventory-${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     }
@@ -208,9 +198,7 @@ export default function StationInventory() {
         }
         const next = rest.map((line) => {
             const values =
-                line
-                    .match(/"(?:[^"]|"")*"|[^,]+/g)
-                    ?.map((s) => s.replace(/^"|"$/g, "").replaceAll('""', '"')) ?? [];
+                line.match(/"(?:[^"]|"")*"|[^,]+/g)?.map((s) => s.replace(/^"|"$/g, "").replaceAll('""', '"')) ?? [];
             const row: any = Object.fromEntries(cols.map((c, idx) => [c, values[idx] ?? ""]));
             return {
                 id: crypto.randomUUID(),
@@ -256,10 +244,7 @@ export default function StationInventory() {
             <header className="sticky top-0 z-10 bg-white/70 backdrop-blur border-b">
                 <div className="section py-4 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => nav(`/sector/${encodeURIComponent(sector)}`)}
-                            className="soft-btn px-3 py-2"
-                        >
+                        <button onClick={() => nav(`/sector/${encodeURIComponent(sector)}`)} className="soft-btn px-3 py-2">
                             ← {sector} Stations
                         </button>
                         <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
@@ -338,11 +323,7 @@ export default function StationInventory() {
                             placeholder="Search by product or category"
                             className="text-input w-[18rem] md:w-[28rem]"
                         />
-                        <select
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="text-input"
-                        >
+                        <select value={category} onChange={(e) => setCategory(e.target.value)} className="text-input">
                             {categories.map((c) => (
                                 <option key={c} value={c}>
                                     {c}
@@ -359,20 +340,10 @@ export default function StationInventory() {
                         <table className="min-w-[56rem] w-full text-sm">
                             <thead>
                                 <tr className="bg-slate-100">
-                                    <Th
-                                        rowSpan={2}
-                                        onClick={() => toggleSort("category")}
-                                        active={sort.by === "category"}
-                                        dir={sort.dir}
-                                    >
+                                    <Th rowSpan={2} onClick={() => toggleSort("category")} active={sort.by === "category"} dir={sort.dir}>
                                         Category
                                     </Th>
-                                    <Th
-                                        rowSpan={2}
-                                        onClick={() => toggleSort("name")}
-                                        active={sort.by === "name"}
-                                        dir={sort.dir}
-                                    >
+                                    <Th rowSpan={2} onClick={() => toggleSort("name")} active={sort.by === "name"} dir={sort.dir}>
                                         Product Name
                                     </Th>
                                     <Th
@@ -468,8 +439,7 @@ export default function StationInventory() {
                                         toNum(item?.source?.loaned) +
                                         toNum(item?.source?.fas);
                                     const warn =
-                                        item.stocks !== undefined &&
-                                        (statusTotal !== item.stocks || sourceTotal !== item.stocks);
+                                        item.stocks !== undefined && (statusTotal !== item.stocks || sourceTotal !== item.stocks);
 
                                     return (
                                         <tr key={item.id} className="border-t hover:bg-slate-50">
@@ -477,55 +447,27 @@ export default function StationInventory() {
                                             <td className="px-4 py-2 font-medium">{item.name}</td>
                                             <td className="px-4 py-2 text-right">{toNum(item.stocks)}</td>
 
-                                            <td className="px-4 py-2 text-right bg-blue-50/40">
-                                                {toNum(item?.status?.serviceable)}
-                                            </td>
-                                            <td className="px-4 py-2 text-right bg-blue-50/40">
-                                                {toNum(item?.status?.unserviceable)}
-                                            </td>
-                                            <td className="px-4 py-2 text-right bg-blue-50/40">
-                                                {toNum(item?.status?.ber)}
-                                            </td>
-                                            <td className="px-4 py-2 text-right bg-blue-50/40">
-                                                {statusTotal}
-                                            </td>
+                                            <td className="px-4 py-2 text-right bg-blue-50/40">{toNum(item?.status?.serviceable)}</td>
+                                            <td className="px-4 py-2 text-right bg-blue-50/40">{toNum(item?.status?.unserviceable)}</td>
+                                            <td className="px-4 py-2 text-right bg-blue-50/40">{toNum(item?.status?.ber)}</td>
+                                            <td className="px-4 py-2 text-right bg-blue-50/40">{statusTotal}</td>
 
-                                            <td className="px-4 py-2 text-right bg-amber-50/40">
-                                                {toNum(item?.source?.organic)}
-                                            </td>
-                                            <td className="px-4 py-2 text-right bg-amber-50/40">
-                                                {toNum(item?.source?.donated)}
-                                            </td>
-                                            <td className="px-4 py-2 text-right bg-amber-50/40">
-                                                {toNum(item?.source?.loaned)}
-                                            </td>
-                                            <td className="px-4 py-2 text-right bg-amber-50/40">
-                                                {toNum(item?.source?.fas)}
-                                            </td>
-                                            <td className="px-4 py-2 text-right bg-amber-50/40">
-                                                {sourceTotal}
-                                            </td>
+                                            <td className="px-4 py-2 text-right bg-amber-50/40">{toNum(item?.source?.organic)}</td>
+                                            <td className="px-4 py-2 text-right bg-amber-50/40">{toNum(item?.source?.donated)}</td>
+                                            <td className="px-4 py-2 text-right bg-amber-50/40">{toNum(item?.source?.loaned)}</td>
+                                            <td className="px-4 py-2 text-right bg-amber-50/40">{toNum(item?.source?.fas)}</td>
+                                            <td className="px-4 py-2 text-right bg-amber-50/40">{sourceTotal}</td>
 
                                             <td className="px-4 py-2 text-right">
                                                 <div className="flex gap-2 justify-end">
-                                                    <button
-                                                        onClick={() => setEditing(item)}
-                                                        className="soft-btn px-3 py-1"
-                                                    >
+                                                    <button onClick={() => setEditing(item)} className="soft-btn px-3 py-1">
                                                         Edit
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDelete(item.id)}
-                                                        className="soft-btn px-3 py-1 hover:bg-red-50"
-                                                    >
+                                                    <button onClick={() => handleDelete(item.id)} className="soft-btn px-3 py-1 hover:bg-red-50">
                                                         Delete
                                                     </button>
                                                 </div>
-                                                {warn && (
-                                                    <div className="text-xs text-amber-600 mt-1">
-                                                        Totals don't match Stocks
-                                                    </div>
-                                                )}
+                                                {warn && <div className="text-xs text-amber-600 mt-1">Totals don't match Stocks</div>}
                                             </td>
                                         </tr>
                                     );
@@ -549,27 +491,15 @@ export default function StationInventory() {
 
             {/* Edit dialog */}
             {editing && (
-                <div
-                    className="fixed inset-0 bg-black/20 flex items-center justify-center p-4"
-                    onClick={() => setEditing(null)}
-                >
-                    <div
-                        className="panel panel-pad w-full max-w-3xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                <div className="fixed inset-0 bg-black/20 flex items-center justify-center p-4" onClick={() => setEditing(null)}>
+                    <div className="panel panel-pad w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
                         <h3 className="font-semibold mb-3">Edit Item — {station}</h3>
                         <form onSubmit={handleEditSave} className="grid gap-4">
                             <div className="grid md:grid-cols-4 gap-3">
                                 <input value={station} disabled readOnly className="text-input" />
                                 <Input name="category" defaultValue={editing.category} className="text-input" />
                                 <Input name="name" defaultValue={editing.name} required className="text-input" />
-                                <Input
-                                    name="stocks"
-                                    type="number"
-                                    min={0}
-                                    defaultValue={editing.stocks}
-                                    className="text-input"
-                                />
+                                <Input name="stocks" type="number" min={0} defaultValue={editing.stocks} className="text-input" />
                             </div>
 
                             <fieldset className="border rounded-2xl p-3">
@@ -589,56 +519,22 @@ export default function StationInventory() {
                                         defaultValue={editing.status?.unserviceable}
                                         className="text-input"
                                     />
-                                    <Input
-                                        name="ber"
-                                        type="number"
-                                        min={0}
-                                        defaultValue={editing.status?.ber}
-                                        className="text-input"
-                                    />
+                                    <Input name="ber" type="number" min={0} defaultValue={editing.status?.ber} className="text-input" />
                                 </div>
                             </fieldset>
 
                             <fieldset className="border rounded-2xl p-3">
                                 <legend className="px-2 text-sm text-slate-500">SOURCE</legend>
                                 <div className="grid md:grid-cols-4 gap-3">
-                                    <Input
-                                        name="organic"
-                                        type="number"
-                                        min={0}
-                                        defaultValue={editing.source?.organic}
-                                        className="text-input"
-                                    />
-                                    <Input
-                                        name="donated"
-                                        type="number"
-                                        min={0}
-                                        defaultValue={editing.source?.donated}
-                                        className="text-input"
-                                    />
-                                    <Input
-                                        name="loaned"
-                                        type="number"
-                                        min={0}
-                                        defaultValue={editing.source?.loaned}
-                                        className="text-input"
-                                    />
-                                    <Input
-                                        name="fas"
-                                        type="number"
-                                        min={0}
-                                        defaultValue={editing.source?.fas}
-                                        className="text-input"
-                                    />
+                                    <Input name="organic" type="number" min={0} defaultValue={editing.source?.organic} className="text-input" />
+                                    <Input name="donated" type="number" min={0} defaultValue={editing.source?.donated} className="text-input" />
+                                    <Input name="loaned" type="number" min={0} defaultValue={editing.source?.loaned} className="text-input" />
+                                    <Input name="fas" type="number" min={0} defaultValue={editing.source?.fas} className="text-input" />
                                 </div>
                             </fieldset>
 
                             <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setEditing(null)}
-                                    className="soft-btn px-4 py-2"
-                                >
+                                <button type="button" onClick={() => setEditing(null)} className="soft-btn px-4 py-2">
                                     Cancel
                                 </button>
                                 <button className="solid-btn px-4 py-2">Save</button>
