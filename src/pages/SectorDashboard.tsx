@@ -1,34 +1,50 @@
 import { useEffect, useMemo, useState, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { itemsKey, loadStations, saveStations, toNum } from "../utils/storage";
+import { itemsKey, toNum } from "../utils/storage";
 import { MiniStat } from "../components/UI";
+import { supabase } from "../lib/supabaseClient";
 
 export default function SectorDashboard() {
     const { sector = "" } = useParams();
     const nav = useNavigate();
 
-    // stations registry (curated)
-    const [stations, setStations] = useState<string[]>(() => loadStations(sector));
+    // stations from Supabase
+    const [stations, setStations] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
 
-    // re-load stations if route param changes (e.g., navigating between sectors without full reload)
+    async function fetchStations() {
+        const { data, error } = await supabase
+            .from("stations")
+            .select("name")
+            .eq("sector_name", sector)
+            .order("created_at", { ascending: true });
+
+        if (error) {
+            console.error("❌ Error fetching stations:", error);
+            return;
+        }
+
+        if (data) {
+            setStations(data.map((s) => s.name));
+        }
+    }
+
     useEffect(() => {
-        setStations(loadStations(sector));
+        fetchStations();
     }, [sector]);
 
-    // items for the sector (for counts, and cascade delete)
+    // items remain local for now
     const STORAGE_KEY = itemsKey(sector);
     const [items, setItems] = useState<any[]>(() => {
         const raw = localStorage.getItem(STORAGE_KEY);
         return raw ? JSON.parse(raw) : [];
     });
 
-    // refresh items if the sector param changes
     useEffect(() => {
         const raw = localStorage.getItem(STORAGE_KEY);
         setItems(raw ? JSON.parse(raw) : []);
     }, [STORAGE_KEY]);
 
-    useEffect(() => saveStations(sector, stations), [sector, stations]);
     useEffect(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(items)), [STORAGE_KEY, items]);
 
     const stationCards = useMemo(
@@ -47,26 +63,53 @@ export default function SectorDashboard() {
     const [showNew, setShowNew] = useState(false);
     const [newName, setNewName] = useState("");
 
-    function createStation(e: FormEvent) {
+    async function createStation(e: FormEvent) {
         e.preventDefault();
         const name = newName.trim();
         if (!name) return;
+
         if (stations.some((s) => s.toLowerCase() === name.toLowerCase())) {
             alert("Station already exists in this sector.");
             return;
         }
+
+        setLoading(true);
+
+        const { error } = await supabase
+            .from("stations")
+            .insert([{ name, sector_name: sector }]);
+
+        if (error) {
+            console.error("❌ Supabase Insert Error:", error);
+            alert("Failed to create station:\n" + error.message);
+            setLoading(false);
+            return;
+        }
+
         setStations((prev) => [...prev, name]);
         setShowNew(false);
         setNewName("");
+        setLoading(false);
     }
 
-    function deleteStation(name: string) {
-        if (
-            !confirm(
-                `Delete station "${name}"?\n\nThis will also delete ALL items under this station in ${sector}.`
-            )
-        )
+    async function deleteStation(name: string) {
+        const confirmDelete = confirm(
+            `Delete station "${name}"?\n\nThis will also delete ALL items under this station in ${sector}.`
+        );
+        if (!confirmDelete) return;
+
+        const { error } = await supabase
+            .from("stations")
+            .delete()
+            .eq("name", name)
+            .eq("sector_name", sector);
+
+        if (error) {
+            console.error("❌ Supabase Delete Error:", error);
+            alert("Failed to delete station:\n" + error.message);
             return;
+        }
+
         setStations((prev) => prev.filter((s) => s !== name));
         setItems((prev) => prev.filter((i) => (i.station || "") !== name));
     }
@@ -84,7 +127,11 @@ export default function SectorDashboard() {
                             {sector} — Stations
                         </h1>
                     </div>
-                    <button onClick={() => setShowNew(true)} className="soft-btn px-3 py-2">
+                    <button
+                        disabled={loading}
+                        onClick={() => setShowNew(true)}
+                        className="soft-btn px-3 py-2 disabled:opacity-40"
+                    >
                         + New Station
                     </button>
                 </div>
@@ -163,7 +210,9 @@ export default function SectorDashboard() {
                             >
                                 Cancel
                             </button>
-                            <button className="solid-btn px-4 py-2">Create</button>
+                            <button disabled={loading} className="solid-btn px-4 py-2 disabled:opacity-40">
+                                {loading ? "Saving..." : "Create"}
+                            </button>
                         </div>
                     </form>
                 </div>
